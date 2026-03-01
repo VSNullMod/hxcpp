@@ -51,7 +51,7 @@
   <mmflag value="-fobjc-legacy-dispatch"/>
   <flag value="-Wno-unused-variable"/>
   <flag value="-arch"/>
-  <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64"/>
+  <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64" unless="HXCPP_ARM64"/>
   <flag value="arm64" if="HXCPP_ARM64"/>
   <flag value="-target"/>
   <flag value="apple-tvos-simulator"/>
@@ -98,7 +98,7 @@
   <flag value="-dynamiclib"/>
   <flag value="-arch"/>
   <flag value="i386" if="HXCPP_X86"/>
-  <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64"/>
+  <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64" unless="HXCPP_ARM64"/>
   <flag value="arm64" if="HXCPP_ARM64"/>
   <flag value="-isysroot"/>
   <flag value="${DEVELOPER_DIR}/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator${TVOS_VER}.sdk"/>
