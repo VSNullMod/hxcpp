@@ -4,7 +4,7 @@
 
 <set name="HXCPP_CPP11" value="1" unless="HXCPP_NO_CPP11 || HXCPP_CPP17 || HXCPP_CPP20" />
 
-<set name="ARCH" value ="-x86_64" if="HXCPP_X86_64" />
+<set name="ARCH" value ="-x86_64" if="HXCPP_M64 || HXCPP_X86_64" />
 <set name="ARCH" value ="-arm64" if="HXCPP_ARM64" />
 
 <set name="HXCPP_USE_LIBTOOL" value="1" />
@@ -57,7 +57,7 @@
   <flag value="-Wno-unused-variable"/>
   <flag value="-arch"/>
   <flag value="i386" if="HXCPP_X86"/>
-  <flag value="x86_64" if="HXCPP_X86_64"/>
+  <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64"/>
   <flag value="arm64" if="HXCPP_ARM64"/>
   <flag value="-target"/>
   <flag value="apple-ios-simulator"/>
@@ -103,7 +103,7 @@
   <flag value="-dynamiclib"/>
   <flag value="-arch"/>
   <flag value="i386" if="HXCPP_X86"/>
-  <flag value="x86_64" if="HXCPP_X86_64"/>
+  <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64"/>
   <flag value="arm64" if="HXCPP_ARM64"/>
   <flag value="-target"/>
   <flag value="apple-ios-simulator"/>
