@@ -21,6 +21,8 @@
     <flag value="x86_64" if="HXCPP_M64 || HXCPP_X86_64"/>
     <flag value="arm64" if="HXCPP_ARM64"/>
   </section>
+  <flag value="-target"/>
+  <flag value="apple-watchos-simulator"/>
 
   <pchflag value="-x" />
   <pchflag value="c++-header" />

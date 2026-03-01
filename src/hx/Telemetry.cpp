@@ -199,7 +199,7 @@ public:
       int obj_id = __hxt_ptr_id(_last_obj);
       alloc_mutex.lock();
       std::map<void*, hx::Telemetry*>::iterator exist = alloc_map.find(_last_obj);
-      if (exist != alloc_map.end() && _last_obj!=(NULL)) {
+      if (exist != alloc_map.end() && _last_obj!=(NULL) && *(int**)_last_obj != 0) {
         type = "_unknown";
         int vtt = _last_obj->__GetType();
         if (vtt==vtInt || vtt==vtFloat || vtt==vtBool) type = "_non_class";

@@ -154,7 +154,7 @@
   <flag value="-c"/>
   <outflag value="-o"/>
   <ext value=".obj"/>
-  <objdir value="obj/android${OBJEXT}${ARCH}" />
+  <objdir value="obj/android${OBJEXT}" />
 </compiler>
 
 

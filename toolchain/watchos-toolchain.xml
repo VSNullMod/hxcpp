@@ -20,6 +20,8 @@
     <flag value="armv7k" unless="HXCPP_ARM64_32"/>
     <flag value="arm64_32" if="HXCPP_ARM64_32"/>
   </section>
+  <flag value="-target"/>
+  <flag value="apple-watchos"/>
   
 
   <pchflag value="-x" />

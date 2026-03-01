@@ -132,7 +132,7 @@ class BuildTool
 
       instance = this;
 
-      m64 = mDefines.exists("HXCPP_M64");
+      m64 = mDefines.exists("HXCPP_M64") || mDefines.exists("HXCPP_X86_64");
       m32 = mDefines.exists("HXCPP_M32") || mDefines.exists("HXCPP_X86");
       arm64 = mDefines.exists("HXCPP_ARM64");
       armv7 = mDefines.exists("HXCPP_ARMV7");
@@ -2150,7 +2150,7 @@ class BuildTool
          {
             var best="0.0";
             var files = FileSystem.readDirectory(dev_path);
-            var extract_version = ~/^iPhoneOS(.*).sdk$/;
+            var extract_version = ~/^iPhoneOS(.+).sdk$/;
             for(file in files)
             {
                if (extract_version.match(file))
@@ -2172,7 +2172,7 @@ class BuildTool
          {
             var best="0.0";
             var files = FileSystem.readDirectory(dev_path);
-            var extract_version = ~/^AppleTVOS(.*).sdk$/;
+            var extract_version = ~/^AppleTVOS(.+).sdk$/;
             for(file in files)
             {
                if (extract_version.match(file))
@@ -2195,7 +2195,7 @@ class BuildTool
          {
             var best="0.0";
             var files = FileSystem.readDirectory(dev_path);
-            var extract_version = ~/^WatchOS(.*).sdk$/;
+            var extract_version = ~/^WatchOS(.+).sdk$/;
             for(file in files)
             {
                if (extract_version.match(file))
@@ -2218,15 +2218,13 @@ class BuildTool
          {
             var best="0.0";
             var files = FileSystem.readDirectory(dev_path);
-            var extract_version = ~/^MacOSX(.*).sdk$/;
+            var extract_version = ~/^MacOSX(.+).sdk$/;
             for(file in files)
             {
                if (extract_version.match(file))
                {
                   var ver = extract_version.matched(1);
-                  var split_best = best.split(".");
-                  var split_ver = ver.split(".");
-                  if (Std.parseFloat(split_ver[0]) > Std.parseFloat(split_best[0]) || Std.parseFloat(split_ver[1]) > Std.parseFloat(split_best[1]))
+                  if (Std.parseFloat(ver) > Std.parseFloat(best))
                      best = ver;
                }
             }
@@ -2378,6 +2376,9 @@ class BuildTool
                case "pragma" :
                   if (el.has.once)
                      mPragmaOnce.set(mCurrentIncludeFile, parseBool(substitute(el.att.once)));
+
+               case "cocoapod" :
+                  Cocoapods.setCocoapodVersion(el.att.name, el.att.version);
             }
          }
       }
@@ -2494,6 +2495,10 @@ class BuildTool
          {
             sub = PathManager.getHaxelib(sub.substr(8));
             sub = PathManager.standardize(sub);
+         }
+         else if (sub.startsWith("cocoapod:"))
+         {
+            sub = Cocoapods.resolveCocoapodPathRequest(sub.substr(9), mDefines);
          }
          else if (sub.startsWith("removeQuotes:"))
          {

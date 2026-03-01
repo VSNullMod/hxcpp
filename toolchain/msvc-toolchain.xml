@@ -74,19 +74,17 @@
   <flag value="/std:c++17" if="HXCPP_CPP17"/>
   <flag value="/std:c++20" if="HXCPP_CPP20"/>
 
+  <section if="HXCPP_DEBUG_LINK">
+     <flag value="-Zi" unless="HXCPP_COMPILE_CACHE" />
+     <flag value="-Z7" if="HXCPP_COMPILE_CACHE" />
+     <flag value="-Fd${HXCPP_BUILD_DIR}${MSVC_OBJ_DIR}/vc.pdb" unless="HXCPP_COMPILE_CACHE" />
+  </section>
+
   <!-- standard optimization flags -->
   <flag value="-Od" if="debug" tag="optim-std" />
   <flag value="-O2" unless="debug" tag="optim-std" />
-  <section if="HXCPP_DEBUG_LINK">
-     <flag value="-Zi" unless="HXCPP_COMPILE_CACHE" tag="optim-std" />
-     <flag value="-Z7" if="HXCPP_COMPILE_CACHE" tag="optim-std" />
-     <flag value="-Fd${HXCPP_BUILD_DIR}${MSVC_OBJ_DIR}/vc.pdb" unless="HXCPP_COMPILE_CACHE" tag="optim-std" />
-  </section>
 
   <!-- non-standard optimization flags -->
-  <flag value="-Zi" unless="HXCPP_COMPILE_CACHE" tag="debug" />
-  <flag value="-Z7" if="HXCPP_COMPILE_CACHE" tag="debug" />
-  <flag value="-Fd${HXCPP_BUILD_DIR}${MSVC_OBJ_DIR}/vc.pdb" unless="HXCPP_COMPILE_CACHE" tag="debug" />
   <flag value="-Od" tag="debug" />
   <flag value="-O2" tag="release" />
   <flag value="-bigobj" if="debug"  />

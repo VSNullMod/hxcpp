@@ -44,7 +44,7 @@
 	<flag value="-fPIC"/>
 	<cppflag value="-frtti"/>
 	<outflag value="-o"/>
-	<objdir value="./obj/bb${OBJEXT}${ARCH}"/>
+	<objdir value="./obj/bb${OBJEXT}"/>
 </compiler>
 
 

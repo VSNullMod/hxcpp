@@ -56,7 +56,7 @@
 	<!-- <flag value="-fPIE" /> -->
 	<flag value="--sysroot=${TIZEN_PLATFORM}" />
 	<outflag value="-o"/>
-	<objdir value="./obj/tizen${OBJEXT}${ARCH}" />
+	<objdir value="./obj/tizen${OBJEXT}" />
 </compiler>
 
 <linker id="exe" exe="${EXEPREFIX}-g++" if="tizen">

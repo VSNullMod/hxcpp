@@ -4,7 +4,8 @@
 
 <set name="HXCPP_CPP11" value="1" unless="HXCPP_NO_CPP11 || HXCPP_CPP17 || HXCPP_CPP20" />
 
-<set name="ARCH" value ="-64" if="HXCPP_M64" />
+<set name="ARCH" value ="-x86_64" if="HXCPP_X86_64" />
+<set name="ARCH" value ="-arm64" if="HXCPP_ARM64" />
 
 <set name="HXCPP_USE_LIBTOOL" value="1" />
 <set name="HXCPP_LIBTOOL" value="xcrun --sdk appletvsimulator${TVOS_VER} libtool" />
@@ -50,13 +51,16 @@
   <mmflag value="-fobjc-legacy-dispatch"/>
   <flag value="-Wno-unused-variable"/>
   <flag value="-arch"/>
-  <flag value="x86_64" />
+  <flag value="x86_64" if="HXCPP_X86_64"/>
+  <flag value="arm64" if="HXCPP_ARM64"/>
+  <flag value="-target"/>
+  <flag value="apple-tvos-simulator"/>
   <flag value="-isysroot"/>
   <flag value="${DEVELOPER_DIR}/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator${TVOS_VER}.sdk"/>
   <!-- Removed for iOS 8 -->
   <!-- <flag value="-fvisibility=hidden"/> -->
-  <!-- <flag value="-miphoneos-version-min=${IPHONE_VER}"/> -->
-  <flag value="-mappletvos-version-min=9.0"/>
+  <!-- <flag value="-mtvos-simulator-version-min=${IPHONE_VER}"/> -->
+  <flag value="-mtvos-simulator-version-min=9.0"/>
   <flag value="-DAPPLETV=APPLETV"/>
   <flag value="-DAPPLETVSIM=APPLETVSIM"/>
   <flag value="-DENABLE_BITCODE=YES"/>
@@ -81,7 +85,7 @@
 
   <outflag value="-o"/>
   <ext value=".o"/>
-  <objdir value="obj/appletvsim${OBJGCC}${OBJDBG}/" />
+  <objdir value="obj/appletvsim${OBJGCC}${OBJDBG}${ARCH}/" />
 </compiler>
 
 <linker id="dll" exe="g++" >
@@ -93,8 +97,9 @@
   <mmflag value="-stdlib=libc++" if="HXCPP_CPP11 || HXCPP_CPP17 || HXCPP_CPP20" />
   <flag value="-dynamiclib"/>
   <flag value="-arch"/>
-  <flag value="i386" unless="HXCPP_M64"/>
-  <flag value="x86_64" if="HXCPP_M64"/>
+  <flag value="i386" if="HXCPP_X86"/>
+  <flag value="x86_64" if="HXCPP_X86_64"/>
+  <flag value="arm64" if="HXCPP_ARM64"/>
   <flag value="-isysroot"/>
   <flag value="${DEVELOPER_DIR}/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator${TVOS_VER}.sdk"/>
   <flag value="-Wl,-undefined,dynamic_lookup"/>

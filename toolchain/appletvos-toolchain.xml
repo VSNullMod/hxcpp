@@ -39,11 +39,13 @@
   <flag value="-O2" unless="debug"/>
   <flag value="-arch"/>
   <flag value="arm64" if="HXCPP_ARM64" />
+  <flag value="-target"/>
+  <flag value="apple-tvos"/>
   <flag value="-isysroot"/>
   <flag value="${DEVELOPER_DIR}/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS${TVOS_VER}.sdk"/>
-  <!-- <flag value="-miphoneos-version-min=3.0" if="HXCPP_GCC" unless="HXCPP_ARMV7" />
-  <flag value="-miphoneos-version-min=5.0" if="HXCPP_ARMV7" /> -->
-  <flag value="-mappletvos-version-min=9.0" unless="HXCPP_GCC" />
+  <!-- <flag value="-mtvos-version-min=3.0" if="HXCPP_GCC" unless="HXCPP_ARMV7" />
+  <flag value="-mtvos-version-min=5.0" if="HXCPP_ARMV7" /> -->
+  <flag value="-mtvos-version-min=9.0" unless="HXCPP_GCC" />
   <flag value="-fobjc-arc" if="OBJC_ARC" />
   <flag value="-DOBJC_ARC" if="OBJC_ARC" />
   <flag value="-Wno-parentheses" />

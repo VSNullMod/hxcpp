@@ -4,7 +4,8 @@
 
 <set name="HXCPP_CPP11" value="1" unless="HXCPP_NO_CPP11 || HXCPP_CPP17 || HXCPP_CPP20" />
 
-<set name="ARCH" value ="-64" if="HXCPP_M64" />
+<set name="ARCH" value ="-x86_64" if="HXCPP_X86_64" />
+<set name="ARCH" value ="-arm64" if="HXCPP_ARM64" />
 
 <set name="HXCPP_USE_LIBTOOL" value="1" />
 <set name="HXCPP_LIBTOOL" value="xcrun --sdk iphonesimulator${IPHONE_VER} libtool" />
@@ -55,12 +56,11 @@
   <mmflag value="-fobjc-legacy-dispatch"/>
   <flag value="-Wno-unused-variable"/>
   <flag value="-arch"/>
-  <flag value="i386" unless="HXCPP_M64 || HXCPP_ARM64"/>
-  <flag value="x86_64" if="HXCPP_M64" unless="HXCPP_ARM64" />
-  <flag value="arm64" if="HXCPP_ARM64" />
-  <flag value="-target" />
-  <flag value="x86_64-apple-ios-simulator" if="HXCPP_M64" unless="HXCPP_ARM64" />
-  <flag value="arm64-apple-ios-simulator" if="HXCPP_ARM64" />
+  <flag value="i386" if="HXCPP_X86"/>
+  <flag value="x86_64" if="HXCPP_X86_64"/>
+  <flag value="arm64" if="HXCPP_ARM64"/>
+  <flag value="-target"/>
+  <flag value="apple-ios-simulator"/>
   <flag value="-isysroot"/>
   <flag value="${DEVELOPER_DIR}/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator${IPHONE_VER}.sdk"/>
   <!-- Removed for iOS 8 -->
@@ -90,7 +90,7 @@
 
   <outflag value="-o"/>
   <ext value=".o"/>
-  <objdir value="obj/iphonesim${OBJGCC}${OBJDBG}/" />
+  <objdir value="obj/iphonesim${OBJGCC}${OBJDBG}${ARCH}/" />
 </compiler>
 
 <linker id="dll" exe="g++" >
@@ -102,12 +102,11 @@
   <mmflag value="-stdlib=libc++" if="HXCPP_CPP11 || HXCPP_CPP17 || HXCPP_CPP20" />
   <flag value="-dynamiclib"/>
   <flag value="-arch"/>
-  <flag value="i386" unless="HXCPP_M64 || HXCPP_ARM64"/>
-  <flag value="x86_64" if="HXCPP_M64" unless="HXCPP_ARM64" />
-  <flag value="arm64" if="HXCPP_ARM64" />
-  <flag value="-target" />
-  <flag value="x86_64-apple-ios-simulator" if="HXCPP_M64" unless="HXCPP_ARM64" />
-  <flag value="arm64-apple-ios-simulator" if="HXCPP_ARM64" />
+  <flag value="i386" if="HXCPP_X86"/>
+  <flag value="x86_64" if="HXCPP_X86_64"/>
+  <flag value="arm64" if="HXCPP_ARM64"/>
+  <flag value="-target"/>
+  <flag value="apple-ios-simulator"/>
   <flag value="-isysroot"/>
   <flag value="${DEVELOPER_DIR}/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator${IPHONE_VER}.sdk"/>
   <flag value="-Wl,-undefined,dynamic_lookup"/>
