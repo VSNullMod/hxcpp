@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: krdlab/setup-haxe@v2
+      - uses: ShadowEngineTeam/setup-haxe@main
         with:
           haxe-version: 4.3.7
 
