@@ -311,7 +311,7 @@ class BuildTool
          // Calculate platform string
          var platform = m64 ? "x64" : (arm64 ? "ARM64" : "Win32");
 
-         var gen = new GenMsvc(mDefines, mTargets, mCompiler, platform, defaultCxxStandard);
+         var gen = new GenMsvc(mDefines, mTargets, mCompiler, platform, 20);
          for(target in inTargets)
             gen.generate(target);
       }
