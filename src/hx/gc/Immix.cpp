@@ -7057,7 +7057,7 @@ int __hxcpp_obj_id(Dynamic inObj)
    #ifdef HXCPP_USE_OBJECT_MAP
    return sGlobalAlloc->GetObjectID(obj);
    #else
-   return (int)(obj);
+   return (intptr_t)(obj);
    #endif
 }
 
@@ -7066,7 +7066,7 @@ hx::Object *__hxcpp_id_obj(int inId)
    #ifdef HXCPP_USE_OBJECT_MAP
    return (hx::Object *)sGlobalAlloc->GetIDObject(inId);
    #else
-   return (hx::Object *)(inId);
+   return (hx::Object *)(intptr_t)(inId);
    #endif
 }
 
@@ -7084,7 +7084,7 @@ unsigned int __hxcpp_obj_hash(Dynamic inObj)
    size_t h64 = (size_t)obj;
    return (unsigned int)(h64>>2) ^ (unsigned int)(h64>>32);
    #else
-   return ((unsigned int)inObj.mPtr) >> 4;
+   return ((uintptr_t)inObj.mPtr) >> 4;
    #endif
 }
 #endif
