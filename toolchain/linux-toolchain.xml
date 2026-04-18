@@ -1,6 +1,6 @@
 <xml>
 
-<include name="toolchain/linux-toolchain-clang.xml" />
-<!-- <include name="toolchain/linux-toolchain-gcc.xml" /> -->
+<!-- <include name="toolchain/linux-toolchain-clang.xml" /> -->
+<include name="toolchain/linux-toolchain-gcc.xml" />
 
 </xml>
