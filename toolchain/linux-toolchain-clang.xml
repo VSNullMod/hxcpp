@@ -2,6 +2,15 @@
 
 <!-- LINUX CLANG TOOLS -->
 
+<set name="ABITRIPLE" value="x86_64-linux-gnu" if="HXCPP_M64" unless="HXCPP_ARM64" />
+<set name="ABITRIPLE" value="aarch64-linux-gnu" if="HXCPP_ARM64" />
+<set name="ABITRIPLE" value="arm-linux-gnueabihf" if="HXCPP_ARMV7" />
+<set name="ABITRIPLE" value="i686-linux-gnu" unless="HXCPP_M64 || HXCPP_ARM64 || HXCPP_ARMV7" />
+
+<error value="Please set one of the architectures, eg HXCPP_ARM64, HXCPP_M32, ..." unless="ABITRIPLE" />
+
+<set name="EXEPREFIX" value="llvm" />
+
 <set name="HXCPP_CPP11" value="1" unless="HXCPP_NO_CPP11 || HXCPP_CPP17 || HXCPP_CPP20" />
 
 <include name="toolchain/gcc-toolchain.xml"/>
@@ -13,9 +22,11 @@
 
 <compiler id="linux" exe="clang++" if="linux">
   <exe name="${CXX}" if="CXX" />
+  <flag value="--target=${ABITRIPLE}" if="ABITRIPLE" />
   <flag value="-c"/>
   <flag value="-flto" if="HXCPP_OPTIMIZE_LINK" unless="debug"/>
   <flag value="-fvisibility=hidden"/>
+  <cppflag value="-stdlib=libc++" />
   <cppflag value="-frtti"/>
   <cppflag value="-std=c++11" if="HXCPP_CPP11" />
   <cppflag value="-std=c++17" if="HXCPP_CPP17"/>
@@ -24,7 +35,6 @@
   <flag value="-O2" unless="debug"/>
   <flag value="-fpic"/>
   <flag value="-fPIC"/>
-  <flag value="-Wno-overflow" />
   <flag value="-Wno-inconsistent-missing-override"/>
   <cppflag value="-Wno-invalid-offsetof" />
   <flag value="-DHX_LINUX"/>
@@ -43,10 +53,11 @@
 
 <linker id="dll" exe="clang++" if="linux">
   <exe name="${CXX}" if="CXX" />
-  <fromfile value="" if="GCC_OLD" />
+  <flag value="--target=${ABITRIPLE}" if="ABITRIPLE" />
   <flag value="-shared"/>
   <flag value="-fpic"/>
   <flag value="-fPIC"/>
+  <flag value="-stdlib=libc++" />
   <flag value="-m32" unless="noM32"/>
   <flag value="-m64" if="HXCPP_M64" unless="noM64" />
   <flag value="-Xlinker"/>
@@ -59,9 +70,10 @@
 
 <linker id="exe" exe="clang++" if="linux">
   <exe name="${CXX}" if="CXX" />
-  <fromfile value="" if="GCC_OLD" />
+  <flag value="--target=${ABITRIPLE}" if="ABITRIPLE" />
   <flag value="-debug" if="HXCPP_DEBUG_LINK" />
   <flag value="-rdynamic"/>
+  <flag value="-stdlib=libc++" />
   <flag value="-m32" unless="noM32"/>
   <flag value="-m64" if="HXCPP_M64" unless="noM64" />
   <flag value="-Wl,-rpath=$ORIGIN" />
