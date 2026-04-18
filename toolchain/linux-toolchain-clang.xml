@@ -26,6 +26,7 @@
   <flag value="-c"/>
   <flag value="-flto" if="HXCPP_OPTIMIZE_LINK" unless="debug"/>
   <flag value="-fvisibility=hidden"/>
+  <cppflag value="-stdlib=libc++" />
   <cppflag value="-frtti"/>
   <cppflag value="-std=c++11" if="HXCPP_CPP11" />
   <cppflag value="-std=c++17" if="HXCPP_CPP17"/>
@@ -56,6 +57,7 @@
   <flag value="-shared"/>
   <flag value="-fpic"/>
   <flag value="-fPIC"/>
+  <flag value="-stdlib=libc++" />
   <flag value="-m32" unless="noM32"/>
   <flag value="-m64" if="HXCPP_M64" unless="noM64" />
   <flag value="-Xlinker"/>
@@ -71,6 +73,7 @@
   <flag value="--target=${ABITRIPLE}" if="ABITRIPLE" />
   <flag value="-debug" if="HXCPP_DEBUG_LINK" />
   <flag value="-rdynamic"/>
+  <flag value="-stdlib=libc++" />
   <flag value="-m32" unless="noM32"/>
   <flag value="-m64" if="HXCPP_M64" unless="noM64" />
   <flag value="-Wl,-rpath=$ORIGIN" />
