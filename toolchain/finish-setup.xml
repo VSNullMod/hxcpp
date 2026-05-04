@@ -52,9 +52,9 @@
    <set name="DEVICEEXTRA" value=".watchos" if="watchos" />
    <set name="LIBEXTRA" value="${DEVICEEXTRA}-x86" if="HXCPP_M32 || HXCPP_X86" unless="HXCPP_ARMV7 || HXCPP_ARMV7S" />
    <set name="LIBEXTRA" value="${DEVICEEXTRA}-x86_64" if="HXCPP_M64 || HXCPP_X86_64" unless="HXCPP_ARM64" />
-   <set name="LIBEXTRA" value="${DEVICEEXTRA}-v6" if="HXCPP_ARMV6" />
-   <set name="LIBEXTRA" value="${DEVICEEXTRA}-v7" if="HXCPP_ARMV7 || HXCPP_ARMV7S" />
-   <set name="LIBEXTRA" value="${DEVICEEXTRA}-64" if="HXCPP_ARM64" />
+   <set name="LIBEXTRA" value="${DEVICEEXTRA}-armv6" if="HXCPP_ARMV6" />
+   <set name="LIBEXTRA" value="${DEVICEEXTRA}-armv7" if="HXCPP_ARMV7 || HXCPP_ARMV7S" />
+   <set name="LIBEXTRA" value="${DEVICEEXTRA}-arm64" if="HXCPP_ARM64" />
    <unset name="DEVICEEXTRA" />
 </section>
 <section unless="LIBEXTRA||windows||linux||mac">
