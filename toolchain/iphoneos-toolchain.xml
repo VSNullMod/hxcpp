@@ -57,7 +57,7 @@
   <flag value="${DEVELOPER_DIR}/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS${IPHONE_VER}.sdk"/>
   <!-- <flag value="-mios-version-min=3.0" if="HXCPP_GCC" unless="HXCPP_ARMV7" />
   <flag value="-mios-version-min=5.0" if="HXCPP_ARMV7" /> -->
-  <flag value="-mios-version-min=11.0" unless="HXCPP_IOS_MIN_VERSION" />
+  <flag value="-mios-version-min=14.0" unless="HXCPP_IOS_MIN_VERSION" />
   <flag value="-mios-version-min=${HXCPP_IOS_MIN_VERSION}" if="HXCPP_IOS_MIN_VERSION" />
   <flag value="-fobjc-arc" if="OBJC_ARC" />
   <flag value="-DOBJC_ARC" if="OBJC_ARC" />
