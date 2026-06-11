@@ -391,38 +391,17 @@ class Compiler
          if (delayedFilename!=null)
            args.push(delayedFilename);
 
-         if (!Log.verbose && (inTid >= 0 && BuildTool.threadExitCode == 0))
+         var tagInfo = inFile.mTags == null ? "" : "\x1b[3m" + inFile.mTags.split(",") + "\x1b[0m";
+         var progressFileName = inFile.mName;
+         var progressSplit = progressFileName.split("/");
+         if (progressSplit.length > 1)
          {
-            printMutex.acquire();
-
-            var tagInfo = inFile.mTags == null ? "" : "\x1b[3m" + inFile.mTags.split(",") + "\x1b[0m";
-            var fileName = inFile.mName;
-            var split = fileName.split("/");
-
-            if (split.length > 1)
-            {
-               fileName = split.slice(0, split.length - 1).join("/") + "/";
-               fileName = "\x1b[33m" + fileName + "\x1b[33;1m" + split[split.length - 1] + "\x1b[0m";
-            }
-            else
-            {
-               fileName = "\x1b[33;1m" + fileName + "\x1b[0m";
-            }
-
-            var output = "";
-
-            if (inProgress != null)
-            {
-                inProgress.current++;
-
-                output = [inProgress.getFormattedProgress(), '-', fileName, tagInfo].join(" ");
-            }
-            else
-               output = ['-', fileName, tagInfo].join(" ");
-
-            Log.info(output);
-
-            printMutex.release();
+            progressFileName = progressSplit.slice(0, progressSplit.length - 1).join("/") + "/";
+            progressFileName = "\x1b[33m" + progressFileName + "\x1b[33;1m" + progressSplit[progressSplit.length - 1] + "\x1b[0m";
+         }
+         else
+         {
+            progressFileName = "\x1b[33;1m" + progressFileName + "\x1b[0m";
          }
 
          if (inTid >= 0)
@@ -450,6 +429,24 @@ class Compiler
                Tools.exit (result);
                //throw "Error : " + result + " - build cancelled";
             }
+         }
+
+         if (!Log.verbose && (inTid >= 0 && BuildTool.threadExitCode == 0))
+         {
+            printMutex.acquire();
+
+            var output = "";
+            if (inProgress != null)
+            {
+               inProgress.current++;
+               output = [inProgress.getFormattedProgress(), '-', progressFileName, tagInfo].join(" ");
+            }
+            else
+               output = ['-', progressFileName, tagInfo].join(" ");
+
+            Log.info(output);
+
+            printMutex.release();
          }
 
          if (cacheName!=null && !useCacheInPlace)

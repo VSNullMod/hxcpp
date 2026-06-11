@@ -127,6 +127,7 @@ class Log
       if (printMutex!=null)
         printMutex.acquire();
       Sys.println(stripColor(message));
+      Sys.stdout().flush();
       if (printMutex!=null)
          printMutex.release();
    }
