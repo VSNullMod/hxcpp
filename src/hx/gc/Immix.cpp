@@ -8,6 +8,7 @@
 #include "GcRegCapture.h"
 #include <hx/Unordered.h>
 #include <mutex>
+#include <thread>
 #include <condition_variable>
 
 #ifdef EMSCRIPTEN
@@ -109,13 +110,13 @@ static int sgCheckInternalOffsetRows = 0;
 int gInAlloc = false;
 
 // This is recalculated from the other parameters
-static size_t sWorkingMemorySize = 256*1024;
+static size_t sWorkingMemorySize          = 10*1024*1024;
 
 #ifdef HXCPP_GC_MOVING
 // Just not sure what this shold be
-static size_t sgMaximumFreeSpace = 512*1024*1024;
+static size_t sgMaximumFreeSpace  = 1024*1024*1024;
 #else
-static size_t sgMaximumFreeSpace = 512*1024*1024;
+static size_t sgMaximumFreeSpace  = 1024*1024*1024;
 #endif
 
 
@@ -702,7 +703,7 @@ struct HoleRange
 hx::QuickVec<struct BlockDataInfo *> *gBlockInfo = 0;
 static int gBlockInfoEmptySlots = 0;
 
-#define FRAG_THRESH 20
+#define FRAG_THRESH 14
 
 #define ZEROED_NOT    0
 #define ZEROED_THREAD 1
@@ -2439,7 +2440,7 @@ public:
    // Don't mark our ref !
 
    #ifdef HXCPP_VISIT_ALLOCS
-   void __Visit(hx::VisitContext *__inCtx) { HX_VISIT_MEMBER(mRef); }
+   void __Visit(hx::VisitContext *__inCtx) HXCPP_OVERRIDE { HX_VISIT_MEMBER(mRef); }
    #endif
 
    Dynamic mRef;
@@ -2930,8 +2931,8 @@ public:
 
    AllocCounter() { count = 0; }
 
-   void visitObject(hx::Object **ioPtr) { count ++; }
-   void visitAlloc(void **ioPtr) { count ++; }
+   void visitObject(hx::Object **ioPtr) HXCPP_OVERRIDE { count ++; }
+   void visitAlloc(void **ioPtr) HXCPP_OVERRIDE { count ++; }
 };
 
 
@@ -3042,7 +3043,7 @@ void *HxAllocGCBlock(size_t inSize)
    {
       size_t size = 65536;
       size *= IMMIX_BLOCK_SIZE;
-      #if defined(HX_WINDOWS) && defined(HXCPP_M64)
+      #if defined(HX_WINDOWS) && (defined(HXCPP_M64)||defined(HXCPP_ARM64))
       chunkData = (unsigned char *)0x100000000;
       VirtualAlloc(chunkData,size,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
       #else
@@ -3098,11 +3099,11 @@ void VerifyStackRead(int *inBottom, int *inTop)
 
 // TODO - work out best size based on cache size?
 #ifdef HXCPP_GC_BIG_BLOCKS
-static int sMinZeroQueueSize = 4*2;
-static int sMaxZeroQueueSize = 16*2;
+static int sMinZeroQueueSize = 4;
+static int sMaxZeroQueueSize = 16;
 #else
-static int sMinZeroQueueSize = 8*2;
-static int sMaxZeroQueueSize = 32*2;
+static int sMinZeroQueueSize = 8;
+static int sMaxZeroQueueSize = 32;
 #endif
 
 #define BLOCK_OFSIZE_COUNT 12
@@ -3186,9 +3187,9 @@ public:
 
    void FreeLarge(void *inLarge)
    {
-		#ifdef HXCPP_TELEMETRY
+#ifdef HXCPP_TELEMETRY
        __hxt_gc_free_large(inLarge);
-		#endif
+#endif
 
       ((unsigned char *)inLarge)[HX_ENDIAN_MARK_ID_BYTE] = 0;
       // AllocLarge will not lock this list unless it decides there is a suitable
@@ -3220,8 +3221,7 @@ public:
 
       //Should we force a collect ? - the 'large' data are not considered when allocating objects
       // from the blocks, and can 'pile up' between smalll object allocations
-		size_t newThreshold = mLargeAllocForceRefresh * 1.5f;
-      if ((inSize+mLargeAllocated > newThreshold) && sgInternalEnable)
+      if ((inSize+mLargeAllocated > mLargeAllocForceRefresh) && sgInternalEnable)
       {
          #ifdef SHOW_MEM_EVENTS
          //GCLOG("Large alloc causing collection");
@@ -3877,24 +3877,24 @@ public:
          GlobalAllocator *mAlloc;
       public:
          AdjustPointer(GlobalAllocator *inAlloc) : mAlloc(inAlloc) {  }
-      
-         void visitObject(hx::Object **ioPtr)
+
+         void visitObject(hx::Object **ioPtr) HXCPP_OVERRIDE
          {
             if ( ((*(unsigned int **)ioPtr)[-1]) == IMMIX_OBJECT_HAS_MOVED )
             {
                //GCLOG("  patch object to  %p -> %p\n", *ioPtr,  (*(hx::Object ***)ioPtr)[0]);
                *ioPtr = (*(hx::Object ***)ioPtr)[0];
-               //GCLOG("    %08x %08x ...\n", ((int *)(*ioPtr))[0], ((int *)(*ioPtr))[1] ); 
+               //GCLOG("    %08x %08x ...\n", ((int *)(*ioPtr))[0], ((int *)(*ioPtr))[1] );
             }
          }
 
-         void visitAlloc(void **ioPtr)
+         void visitAlloc(void **ioPtr) HXCPP_OVERRIDE
          {
             if ( ((*(unsigned int **)ioPtr)[-1]) == IMMIX_OBJECT_HAS_MOVED )
             {
                //GCLOG("  patch reference to  %p -> %p\n", *ioPtr,  (*(void ***)ioPtr)[0]);
                *ioPtr = (*(void ***)ioPtr)[0];
-               //GCLOG("    %08x %08x ...\n", ((int *)(*ioPtr))[0], ((int *)(*ioPtr))[1] ); 
+               //GCLOG("    %08x %08x ...\n", ((int *)(*ioPtr))[0], ((int *)(*ioPtr))[1] );
             }
          }
       };
@@ -4517,10 +4517,9 @@ public:
       }
    }
 
-   static THREAD_FUNC_TYPE SThreadLoop( void *inInfo )
+   static void SThreadLoop( void *inInfo )
    {
       sGlobalAlloc->ThreadLoop((int)(size_t)inInfo);
-      THREAD_FUNC_RET;
    }
 
    void CreateWorker(int inId)
@@ -4538,7 +4537,9 @@ public:
 
          sThreadSleeping[inId] = false;
 
-         HxCreateDetachedThread(SThreadLoop, info);
+         std::thread thread(SThreadLoop, info);
+
+         thread.detach();
       #endif
    }
 
@@ -5143,11 +5144,11 @@ public:
          }
 
 
-         bool isFragged = stats.fragScore > mAllBlocks.size()*FRAG_THRESH*1.5;
+         bool isFragged = stats.fragScore > mAllBlocks.size()*FRAG_THRESH;
          if (doRelease || isFragged || hx::gAlwaysMove)
          {
-            if (isFragged && sgTimeToNextTableUpdate>1)
-               sgTimeToNextTableUpdate = 1;
+            if (isFragged && sgTimeToNextTableUpdate>3)
+               sgTimeToNextTableUpdate = 3;
             calcMoveOrder( );
 
             // Borrow some blocks to ensuure space to defrag into
@@ -5263,7 +5264,7 @@ public:
       double filled_ratio = (double)mRowsInUse/(double)(mAllBlocksCount*IMMIX_USEFUL_LINES);
       double after_gen = filled_ratio + (1.0-filled_ratio)*mGenerationalRetainEstimate;
 
-      if (after_gen<0.85)
+      if (after_gen<0.75)
       {
          sGcMode = gcmGenerational;
       }
@@ -5272,8 +5273,7 @@ public:
          sGcMode = gcmFull;
          // What was I thinking here?  This breaks #851
          //gByteMarkID |= 0x30;
-			sgTimeToNextTableUpdate = 10;
-		}
+      }
 
       #ifdef SHOW_MEM_EVENTS
       GCLOG("filled=%.2f%% + estimate = %.2f%% = %.2f%% -> %s\n",
@@ -6150,7 +6150,7 @@ public:
    #endif // }  HXCPP_EXPLICIT_STACK_EXTENT
 
 
-   void SetupStackAndCollect(bool inMajor, bool inForceCompact, bool inLocked=false,bool inFreeIsFragged=false)
+   void SetupStackAndCollect(bool inMajor, bool inForceCompact, bool inLocked=false,bool inFreeIsFragged=false) HXCPP_OVERRIDE
    {
       #ifndef HXCPP_SINGLE_THREADED_APP
         #if HXCPP_DEBUG
@@ -6212,7 +6212,7 @@ public:
    }
 
 
-   void *CallAlloc(int inSize,unsigned int inObjectFlags)
+   void *CallAlloc(int inSize,unsigned int inObjectFlags) HXCPP_OVERRIDE
    {
       #ifndef HXCPP_SINGLE_THREADED_APP
       #if HXCPP_DEBUG
@@ -6871,7 +6871,7 @@ int GcGetThreadAttachedCount()
 class GcFreezer : public hx::VisitContext
 {
 public:
-   void visitObject(hx::Object **ioPtr)
+   void visitObject(hx::Object **ioPtr) HXCPP_OVERRIDE
    {
       hx::Object *obj = *ioPtr;
       if (!obj || IsConstAlloc(obj))
@@ -6884,7 +6884,7 @@ public:
       (*ioPtr)->__Visit(this);
    }
 
-   void visitAlloc(void **ioPtr)
+   void visitAlloc(void **ioPtr) HXCPP_OVERRIDE
    {
       void *data = *ioPtr;
       if (!data || IsConstAlloc(data))
@@ -7058,7 +7058,7 @@ int __hxcpp_obj_id(Dynamic inObj)
    #ifdef HXCPP_USE_OBJECT_MAP
    return sGlobalAlloc->GetObjectID(obj);
    #else
-   return (intptr_t)(obj);
+   return (int)(obj);
    #endif
 }
 
@@ -7067,7 +7067,7 @@ hx::Object *__hxcpp_id_obj(int inId)
    #ifdef HXCPP_USE_OBJECT_MAP
    return (hx::Object *)sGlobalAlloc->GetIDObject(inId);
    #else
-   return (hx::Object *)(intptr_t)(inId);
+   return (hx::Object *)(inId);
    #endif
 }
 
@@ -7085,7 +7085,7 @@ unsigned int __hxcpp_obj_hash(Dynamic inObj)
    size_t h64 = (size_t)obj;
    return (unsigned int)(h64>>2) ^ (unsigned int)(h64>>32);
    #else
-   return ((uintptr_t)inObj.mPtr) >> 4;
+   return ((unsigned int)inObj.mPtr) >> 4;
    #endif
 }
 #endif
@@ -7094,3 +7094,4 @@ unsigned int __hxcpp_obj_hash(Dynamic inObj)
 
 
 void DummyFunction(void *inPtr) { }
+

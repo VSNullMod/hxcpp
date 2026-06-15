@@ -411,6 +411,14 @@ class Setup
       else
       {
          root = defines.get("ANDROID_NDK_ROOT");
+
+         if (!FileSystem.exists(root)) {
+            Log.error('ANDROID_NDK_ROOT ["$root"] directory does not exist');
+         }
+         if (!FileSystem.isDirectory(root)) {
+            Log.error('ANDROID_NDK_ROOT ["$root"] is not a diretory');
+         }
+
          Log.setup("\x1b[33;1mUsing Android NDK root: " + root + "\x1b[0m");
       }
 
@@ -656,71 +664,71 @@ class Setup
 
    public static function setupMSVC(ioDefines:Hash<String>, in64:Bool, inArm64:Bool, inArm:Bool, isWinRT:Bool)
    {
-      var isWindows = Sys.systemName() == "Windows";
-
       var detectMsvc = !ioDefines.exists("NO_AUTO_MSVC") &&
-                     !ioDefines.exists("HXCPP_MSVC_CUSTOM");
+                       !ioDefines.exists("HXCPP_MSVC_CUSTOM");
 
-      // Windows-only MSVC autodetection
-      if (isWindows && ioDefines.exists("HXCPP_MSVC_VER"))
+      if (ioDefines.exists("HXCPP_MSVC_VER"))
       {
          var val = ioDefines.get("HXCPP_MSVC_VER");
          if (val=="")
             detectMsvc = false;
          else
          {
-            var ival = Std.parseInt(val);
+            var ival = Std.parseInt(ioDefines.get("HXCPP_MSVC_VER"));
             if (ival>0)
             {
-               var varName = "VS" + ival + "COMNTOOLS";
+               var varName = "VS" + ival+ "COMNTOOLS";
                var where = Sys.getEnv(varName);
                if (where==null)
+               {
+                  for (env in Sys.environment().keys())
+                  {
+                     if (env.substr(0,2)=="VS")
+                     {
+                        Log.info("Found VS variable: " + env);
+                        //Sys.println("Found VS variable " + env);
+                     }
+                  }
                   Log.error("Could not find specified MSVC version: " + ival);
-
-               ioDefines.set("HXCPP_MSVC", where);
+                  //throw "Could not find specified MSVC version " + ival;
+               }
+               ioDefines.set("HXCPP_MSVC", where );
                Sys.putEnv("HXCPP_MSVC", where);
                Log.setup('Using MSVC Ver $ival in $where ($varName)');
             }
             else
             {
                Log.setup('Using specified MSVC Ver $val');
-               ioDefines.set("HXCPP_MSVC", val);
+               ioDefines.set("HXCPP_MSVC", val );
                Sys.putEnv("HXCPP_MSVC", val);
             }
+        }
+      }
+
+      if (detectMsvc)
+      {
+        var extra:String = "";
+        if (isWinRT)
+            extra += "-winrt";
+        if (inArm64)
+            extra += "-arm64";
+	else if (inArm)
+            extra += "-arm";
+        else if (in64)
+            extra += "64";
+         var xpCompat = false;
+         if (ioDefines.exists("HXCPP_WINXP_COMPAT"))
+         {
+            Sys.putEnv("HXCPP_WINXP_COMPAT","1");
+            xpCompat = true;
          }
-      }
+         Sys.putEnv("msvc_host_arch", ioDefines.exists("windows_arm_host") ? "x86" : "x64" );
 
-      // On Unix, we REQUIRE HXCPP_MSVC_CUSTOM
-      if (!isWindows && !ioDefines.exists("HXCPP_MSVC_CUSTOM"))
-      {
-         Log.error("You must define HXCPP_MSVC_CUSTOM pointing to your MSVC root.");
-         return;
-      }
-
-      var extra = "";
-      if (isWinRT) extra += "-winrt";
-      if (inArm64) extra += "-arm64";
-      else if (inArm) extra += "-arm";
-      else if (in64) extra += "64";
-
-      if (ioDefines.exists("HXCPP_WINXP_COMPAT"))
-         Sys.putEnv("HXCPP_WINXP_COMPAT","1");
-
-      Sys.putEnv("msvc_host_arch", ioDefines.exists("windows_arm_host") ? "x86" : "x64");
-
-      var vars_found = false;
-      var error_string = "";
-      var output = new Array<String>();
-
-      if (isWindows)
-      {
-         // Native Windows path (unchanged)
-         var vc_setup_proc = new Process("cmd.exe", [
-            "/C",
-            BuildTool.HXCPP + "\\toolchain\\msvc" + extra + "-setup.bat"
-         ]);
-
-         try {
+         var vc_setup_proc = new Process("cmd.exe", ["/C", BuildTool.HXCPP + "\\toolchain\\msvc" + extra + "-setup.bat" ]);
+         var vars_found = false;
+         var error_string = "";
+         var output = new Array<String>();
+         try{
             while(true)
             {
                var str = vc_setup_proc.stdout.readLine();
@@ -728,8 +736,9 @@ class Setup
                   vars_found = true;
                else if (!vars_found)
                {
-                  if (str.substr(0,5)=="Error" || ~/missing/.match(str))
+                  if (str.substr(0,5)=="Error" || ~/missing/.match(str) )
                      error_string = str;
+
                   output.push(str);
                }
                else
@@ -738,86 +747,46 @@ class Setup
                   var name = str.substr(0,pos);
                   switch(name.toLowerCase())
                   {
-                     case "path","vcinstalldir","windowssdkdir","framework35version",
-                        "frameworkdir","frameworkdir32","frameworkversion",
-                        "frameworkversion32","devenvdir","include","lib","libpath",
-                        "hxcpp_xp_define","hxcpp_hack_pdbsrv":
+                     case "path", "vcinstalldir", "windowssdkdir","framework35version",
+                        "frameworkdir", "frameworkdir32", "frameworkversion",
+                        "frameworkversion32", "devenvdir", "include", "lib", "libpath", "hxcpp_xp_define",
+                        "hxcpp_hack_pdbsrv"
+                      :
                         var value = str.substr(pos+1);
                         ioDefines.set(name,value);
+                        Log.v('  msvs $name=$value');
                         Sys.putEnv(name,value);
                   }
                }
             }
-         } catch(e:Dynamic) {}
+         } catch (e:Dynamic) {
+         };
 
          vc_setup_proc.exitCode();
          vc_setup_proc.close();
-      }
-      else
-      {
-         // Unix + Wine MSVC path
-
-         var arch = "x86";
-         if (inArm64) arch = "arm64";
-         else if (inArm) arch = "arm";
-         else if (in64) arch = "x64";
-
-         var msvcRoot = ioDefines.get("HXCPP_MSVC_CUSTOM");
-         var bin = msvcRoot + "/bin/" + arch;
-         Sys.putEnv("BIN", bin);
-
-         var script = BuildTool.HXCPP + "/toolchain/msvcenv-native.sh";
-
-         var proc = new Process("sh", [
-            "-c",
-            ". \"" + script + "\" && echo HXCPP_VARS && env"
-         ]);
-
-         try {
-            while(true)
+         if (!vars_found || error_string!="")
+         {
+            for (o in output)
             {
-               var str = proc.stdout.readLine();
-               if (str=="HXCPP_VARS")
-                  vars_found = true;
-               else if (!vars_found)
-                  output.push(str);
-               else
-               {
-                  var pos = str.indexOf("=");
-                  if (pos>0)
-                  {
-                     var name = str.substr(0,pos);
-                     var value = str.substr(pos+1);
-
-                     switch(name)
-                     {
-                        case "PATH","INCLUDE","LIB","LIBPATH","TARGET_TRIPLE":
-                           ioDefines.set(name,value);
-                           Sys.putEnv(name,value);
-                     }
-                  }
-               }
+               Log.info(o);
+               //BuildTool.println(o);
             }
-         } catch(e:Dynamic) {}
+            if (error_string!="")
+            {
+               Log.error (error_string);
+               //throw(error_string);
+            }
+            else
+            {
+               Log.info("Missing HXCPP_VARS");
+               //BuildTool.println("Missing HXCPP_VARS");
+            }
 
-         proc.exitCode();
-         proc.close();
+            Log.error("Could not automatically setup MSVC");
+            //throw("Could not automatically setup MSVC");
+         }
       }
 
-      if (!vars_found || error_string!="")
-      {
-         for (o in output)
-            Log.info(o);
-
-         if (error_string!="")
-            Log.error(error_string);
-         else
-            Log.error("Missing HXCPP_VARS");
-
-         Log.error("Could not automatically setup MSVC");
-      }
-
-      // cl.exe detection (works in Wine)
       try
       {
          var proc = new Process("cl.exe",[]);
@@ -825,18 +794,27 @@ class Setup
          proc.close();
          if (str>"")
          {
+            Log.v("MSVC output:" + str);
             var reg = ~/(\d{2})\.\d+/i;
             if (reg.match(str))
             {
                var cl_version = Std.parseInt(reg.matched(1));
+               Log.setup("Using MSVC version: " + cl_version);
                ioDefines.set("MSVC_VER", cl_version+"");
-               if (cl_version>=17) ioDefines.set("MSVC17+","1");
-               if (cl_version>=18) ioDefines.set("MSVC18+","1");
-               if (cl_version==19) ioDefines.set("MSVC19","1");
+               if (cl_version>=17)
+                  ioDefines.set("MSVC17+","1");
+               if (cl_version>=18)
+                  ioDefines.set("MSVC18+","1");
+               if (cl_version==19)
+                  ioDefines.set("MSVC19","1");
                BuildTool.sAllowNumProcs = cl_version >= 14;
+               var threads = BuildTool.getThreadCount();
+               if (threads>1 && cl_version>=18)
+                  ioDefines.set("HXCPP_FORCE_PDB_SERVER","1");
             }
          }
-      } catch(e:Dynamic) {}
+      } catch(e:Dynamic){}
+      //if (cl_version!="") BuildTool.println("Using cl version: " + cl_version);
    }
 
    static function toPath(inPath:String)

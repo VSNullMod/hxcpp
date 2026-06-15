@@ -1,13 +1,14 @@
 <xml>
 
 <!-- make sure hxcpp.n is up to date -->
-<pleaseUpdateHxcppTool version="7" />
+<pleaseUpdateHxcppTool version="8" />
 
 <pragma once="true" />
 
 
 <!-- Use value from Build.xml file unless one is specified from the haxe defines -->
 <set name="hxcpp_api_level" value="${HXCPP_API_LEVEL}" unless="hxcpp_api_level" if="HXCPP_API_LEVEL"  />
+<set name="HXCPP_THREAD_XML" value="${HXCPP}/toolchain/haxe-target-threads.xml" unless="HXCPP_THREAD_XML"/>
 
 <!-- You can override the exes an "exe" section on your own .hxcpp_config -->
 <!-- You can use replace="1" to change the compiler, or omit to add flags -->
@@ -160,7 +161,7 @@
   <compilerflag value="-DTRACY_NO_EXIT" if="HXCPP_TRACY_NO_EXIT"/>
   <compilerflag value="-DTRACY_ON_DEMAND" if="HXCPP_TRACY_ON_DEMAND"/>
 
-  <file name="project/thirdparty/tracy-0.12.0/TracyClient.cpp"/>
+  <file name="project/thirdparty/tracy-0.13.1/TracyClient.cpp"/>
   <cache value="1" project="hxcpp-tracy" asLibrary="true" />
 </files>
 
@@ -213,28 +214,7 @@
   <file name = "src/cpp/encoding/Utf8.cpp"/>
   <file name = "src/cpp/encoding/Utf16.cpp"/>
 
-  <file name="src/hx/thread/RecursiveMutex.cpp"/>
-  <file name="src/hx/thread/ConditionVariable.cpp"/>
-  <file name="src/hx/thread/ThreadImpl.cpp"/>
-  <file name="src/hx/thread/ThreadLocal.cpp"/>
-  <file name="src/hx/thread/Scratch.cpp"/>
-  
-  <section if="windows">
-    <file name="src/hx/thread/CountingSemaphore.win32.cpp"/>
-    <file name="src/hx/thread/ThreadImpl.win32.cpp"/>
-  </section>
-  <section unless="windows">
-    <file name="src/hx/thread/ThreadImpl.noop.cpp"/>
-  </section>
-  <section if="apple">
-    <file name="src/hx/thread/CountingSemaphore.apple.cpp"/>
-  </section>
-  <section if="linux||android">
-    <file name="src/hx/thread/CountingSemaphore.posix.cpp"/>
-  </section>
-  <section unless="windows||apple||linux||android">
-    <file name="src/hx/thread/CountingSemaphore.unsupported.cpp"/>
-  </section>
+  <include name="${HXCPP_THREAD_XML}"/>
 
   <addTwice if="linux||android" />
   <cache value="1" project="hxcpp_runtime" asLibrary="true" />
@@ -305,5 +285,3 @@
 
 
 </xml>
-
-

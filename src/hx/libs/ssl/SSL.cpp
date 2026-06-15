@@ -76,7 +76,7 @@ struct sslctx : public hx::Object
 		((sslctx *)(obj.mPtr))->destroy();
 	}
 
-	String toString() { return HX_CSTRING("sslctx"); }
+	String toString() HXCPP_OVERRIDE { return HX_CSTRING("sslctx"); }
 };
 
 struct sslconf : public hx::Object
@@ -107,7 +107,7 @@ struct sslconf : public hx::Object
 		((sslconf *)(obj.mPtr))->destroy();
 	}
 
-	String toString() { return HX_CSTRING("sslconfig"); }
+	String toString() HXCPP_OVERRIDE { return HX_CSTRING("sslconfig"); }
 };
 
 struct sslcert : public hx::Object
@@ -147,7 +147,7 @@ struct sslcert : public hx::Object
 		((sslcert *)(obj.mPtr))->destroy();
 	}
 
-	String toString() { return HX_CSTRING("sslcert"); }
+	String toString() HXCPP_OVERRIDE { return HX_CSTRING("sslcert"); }
 };
 
 struct sslpkey : public hx::Object
@@ -178,7 +178,7 @@ struct sslpkey : public hx::Object
 		((sslpkey *)(obj.mPtr))->destroy();
 	}
 
-	String toString() { return HX_CSTRING("sslpkey"); }
+	String toString() HXCPP_OVERRIDE { return HX_CSTRING("sslpkey"); }
 };
 
 static mbedtls_entropy_context entropy;
@@ -364,12 +364,12 @@ int _hx_ssl_recv( Dynamic hssl, Array<unsigned char> buf, int p, int l ) {
 		HANDLE_EINTR(recv_again);
 		hx::Throw(HX_CSTRING("ssl network error"));
 	}
-	if( dlen < 0 ) {  
+	if( dlen < 0 ) {
                 if( dlen == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY ) {
                   mbedtls_ssl_close_notify( ssl->s );
 	  	  return 0;
                 }
-		hx::Throw( HX_CSTRING("ssl_recv") ); 
+		hx::Throw( HX_CSTRING("ssl_recv") );
 	}
 	return dlen;
 }
@@ -442,8 +442,32 @@ static int verify_callback(void* param, mbedtls_x509_crt *crt, int depth, uint32
 	CertCloseStore(store, 0);
 	return 0;
 }
-#elif defined(IPHONE) || defined(APPLETV)
-static int verify_callback(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
+#endif
+
+Dynamic _hx_ssl_conf_new( bool server ) {
+	int ret;
+	sslconf *conf = new sslconf();
+	conf->create();
+	if( ret = mbedtls_ssl_config_defaults( conf->c,
+		server ? MBEDTLS_SSL_IS_SERVER : MBEDTLS_SSL_IS_CLIENT,
+		MBEDTLS_SSL_TRANSPORT_STREAM, 0 ) != 0 ){
+		conf->destroy();
+		ssl_error( ret );
+	}
+#ifdef NEKO_WINDOWS
+	mbedtls_ssl_conf_verify(conf->c, verify_callback, NULL);
+#endif
+	mbedtls_ssl_conf_rng( conf->c, mbedtls_ctr_drbg_random, &ctr_drbg );
+	return conf;
+}
+
+void _hx_ssl_conf_close( Dynamic hconf ) {
+	sslconf *conf = val_conf(hconf);
+	conf->destroy();
+}
+
+#if defined(IPHONE) || defined(APPLETV)
+static int apple_verify_cb(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
 	// use mbedtls validate the chain structure and we validate with the iOS system trust store to replace the missing CA bundle
 	if (depth != 0) {
 		*flags = 0;
@@ -475,36 +499,24 @@ static int verify_callback(void *data, mbedtls_x509_crt *crt, int depth, uint32_
 }
 #endif
 
-Dynamic _hx_ssl_conf_new( bool server ) {
-	int ret;
-	sslconf *conf = new sslconf();
-	conf->create();
-	if( ret = mbedtls_ssl_config_defaults( conf->c,
-		server ? MBEDTLS_SSL_IS_SERVER : MBEDTLS_SSL_IS_CLIENT,
-		MBEDTLS_SSL_TRANSPORT_STREAM, 0 ) != 0 ){
-		conf->destroy();
-		ssl_error( ret );
-	}
-#if defined(NEKO_WINDOWS) || defined(IPHONE) || defined(APPLETV)
-	mbedtls_ssl_conf_verify(conf->c, verify_callback, NULL);
-#endif
-	mbedtls_ssl_conf_rng( conf->c, mbedtls_ctr_drbg_random, &ctr_drbg );
-	return conf;
-}
-
-void _hx_ssl_conf_close( Dynamic hconf ) {
-	sslconf *conf = val_conf(hconf);
-	conf->destroy();
-}
-
 void _hx_ssl_conf_set_ca( Dynamic hconf, Dynamic hcert ) {
 	sslconf *conf = val_conf(hconf);
-	if( hcert.mPtr ){
+#if defined(IPHONE) || defined(APPLETV)
+	// always attach Apple system verification callback
+	mbedtls_ssl_conf_verify(conf->c, apple_verify_cb, NULL);
+
+	sslcert *cert = val_cert(hcert);
+	// make sure the ca chain is set even if null
+	mbedtls_ssl_conf_ca_chain(conf->c, cert ? cert->c : NULL, NULL);
+
+#else
+	if( hconf.mPtr ){
 		sslcert *cert = val_cert(hcert);
 		mbedtls_ssl_conf_ca_chain( conf->c, cert->c, NULL );
 	}else{
 		mbedtls_ssl_conf_ca_chain( conf->c, NULL, NULL );
 	}
+#endif
 }
 
 void _hx_ssl_conf_set_verify( Dynamic hconf, int mode ) {

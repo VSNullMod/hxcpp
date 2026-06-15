@@ -61,9 +61,6 @@
   <flag value="-DHXCPP_ANDROID_PLATFORM=${HXCPP_ANDROID_PLATFORM}" />
 
   <!-- Options -->
-  <cppflag value="-std=c++11" if="HXCPP_CPP11" />
-  <cppflag value="-std=c++17" if="HXCPP_CPP17" />
-  <cppflag value="-std=c++20" if="HXCPP_CPP20" />
   <flag value="-flto" if="HXCPP_OPTIMIZE_LINK" unless="debug"/>
   <flag value="-fvisibility=hidden"/>
   <flag value="-ffunction-sections"/>
@@ -77,7 +74,6 @@
   <!-- Warning Supression -->
   <flag value="-Wno-invalid-offsetof" />
   <flag value="-Wno-return-type-c-linkage" />
-  <flag value="-Wno-inconsistent-missing-override" />
   <flag value="-Wno-parentheses" />
   
 </compiler>
@@ -92,18 +88,19 @@
   <!-- Build time error, not run time -->
   <flag value="-Wl,--no-undefined" unless="HXCPP_ALLOW_UNDEFINED" />
 
+  <!-- Disable 16KB page alignment workaround when explicitly requested -->
+  <section unless="HXCPP_ANDROID_NO_16K_PAGES">
+    <!-- Enable 16KB page size for NDK r27 and below -->
+    <flag value="-Wl,-z,max-page-size=16384" unless="NDKV28+" />
+
+    <!-- Extra 16KB alignment workaround for NDK r22 and below -->
+    <flag value="-Wl,-z,common-page-size=16384" unless="NDKV23+" />
+  </section>
+
   <flag value="-stdlib=libc++" unless="NDKV20+" />
   <flag value ="-lc++_static" />
   <flag value ="-lc++abi" />
   <flag value ="-Wl,--allow-multiple-definition"/>
-  <section if="HXCPP_ARM64 || HXCPP_X86_64 || HXCPP_M64">
-    <flag value ="-Wl,-z,max-page-size=0x4000"/>
-    <flag value ="-Wl,-z,common-page-size=0x4000"/>
-  </section>
-  <section if="HXCPP_ARMV7 || HXCPP_X86 || HXCPP_M32">
-    <flag value ="-Wl,-z,max-page-size=0x1000"/>
-    <flag value ="-Wl,-z,common-page-size=0x1000"/>
-  </section>
   <!-- This shows the android link line, which may be so long that it breaks the tool
      https://github.com/HaxeFoundation/hxcpp/pull/1091
      <flag value ="-v" />
