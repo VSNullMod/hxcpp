@@ -210,9 +210,7 @@
   <file name = "src/Math.cpp"/>
   <file name = "src/String.cpp" tags="haxe,hxstring" />
 
-  <file name = "src/cpp/encoding/Ascii.cpp"/>
-  <file name = "src/cpp/encoding/Utf8.cpp"/>
-  <file name = "src/cpp/encoding/Utf16.cpp"/>
+  <file name = "src/cpp/encoding/Encodings.cpp" />
 
   <include name="${HXCPP_THREAD_XML}"/>
 
